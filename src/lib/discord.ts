@@ -25,19 +25,39 @@ export async function createThreadForIssue(
     try {
         const channel = await client.channels.fetch(config.discord.epicChannelId);
 
-        if (!channel || channel.type !== ChannelType.GuildText) {
-            throw new Error('Canal não encontrado ou não é um canal de texto');
+        if (!channel) {
+            throw new Error('Canal não encontrado');
         }
 
         const labels = issue.labels.map((l) => l.name).join(', ');
         const issueType = getIssueType(issue);
+        const threadName = `[${issueType.toUpperCase()}] ${issue.title.substring(0, 80)}`;
+        const message = formatIssueMessage(issue, issueType, labels);
 
-        const thread = await (channel).threads.create({
-            name: `[${issueType.toUpperCase()}] ${issue.title.substring(0, 80)}`,
-            autoArchiveDuration: 1440,
-        });
+        let thread: ThreadChannel;
 
-        await thread.send(formatIssueMessage(issue, issueType, labels));
+        // Suporte para canais de Fórum
+        if (channel.type === ChannelType.GuildForum) {
+            const forumChannel = channel;
+            const post = await forumChannel.threads.create({
+                name: threadName,
+                autoArchiveDuration: 1440,
+                message: { content: message },
+            });
+            thread = post;
+        }
+        // Suporte para canais de texto normais
+        else if (channel.type === ChannelType.GuildText) {
+            const textChannel = channel;
+            thread = await textChannel.threads.create({
+                name: threadName,
+                autoArchiveDuration: 1440,
+            });
+            await thread.send(message);
+        }
+        else {
+            throw new Error(`Tipo de canal não suportado: ${channel.type}`);
+        }
 
         return thread;
     } catch (error) {

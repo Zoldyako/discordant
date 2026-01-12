@@ -57,18 +57,52 @@ export async function listIssuesWithLabels(
     labels: string[]
 ): Promise<GithubIssue[]> {
     try {
-        const { data } = await octokit.rest.issues.listForRepo({
-            owner,
-            repo,
-            state: 'open',
-            labels: labels.join(','),
-            sort: 'created',
-            direction: 'desc',
-            per_page: 10,
-        });
-        return data as GithubIssue[];
+        // A API do GitHub com labels separados por vírgula retorna issues com TODAS as labels
+        // Para buscar issues com QUALQUER uma das labels, precisamos fazer chamadas separadas
+        const allIssues: GithubIssue[] = [];
+        const seenIds = new Set<number>();
+
+        for (const label of labels) {
+            const { data } = await octokit.rest.issues.listForRepo({
+                owner,
+                repo,
+                state: 'open',
+                labels: label,
+                sort: 'created',
+                direction: 'desc',
+                per_page: 10,
+            });
+
+            for (const issue of data) {
+                if (!seenIds.has(issue.id)) {
+                    seenIds.add(issue.id);
+                    allIssues.push(issue as GithubIssue);
+                }
+            }
+        }
+
+        return allIssues;
     } catch (error) {
         console.error('Erro ao buscar issues:', error);
         return [];
+    }
+}
+
+export async function addLabelToIssue(
+    owner: string,
+    repo: string,
+    issueNumber: number,
+    label: string
+): Promise<void> {
+    try {
+        await octokit.rest.issues.addLabels({
+            owner,
+            repo,
+            issue_number: issueNumber,
+            labels: [label],
+        });
+    } catch (error) {
+        console.error(`Erro ao adicionar label '${label}' à issue #${issueNumber}:`, error);
+        throw error;
     }
 }

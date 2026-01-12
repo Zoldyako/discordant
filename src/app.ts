@@ -1,7 +1,6 @@
 import { Events } from 'discord.js';
 import { client, commands } from './lib/discord.js';
 import { config } from './config.js';
-// import { handleNewThread } from './handlers/thread.js';
 import { pollPrivateRepoIssues } from './handlers/issue.js';
 import { commandList } from './commands/index.js';
 
@@ -21,11 +20,6 @@ client.once(Events.ClientReady, () => {
     setInterval(pollPrivateRepoIssues, 120000);
 });
 
-
-// Event: Nova thread criada (DESABILITADO - usar comando /create-issue)
-// client.on('threadCreate', async (thread) => {
-//     await handleNewThread(thread);
-// });
 
 // Evento de interação
 client.on(Events.InteractionCreate, async (interaction) => {
