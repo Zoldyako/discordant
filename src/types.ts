@@ -1,3 +1,5 @@
+import type { ChatInputCommandInteraction } from 'discord.js';
+
 export interface GithubIssue {
     id: number;
     node_id: string;
@@ -16,3 +18,12 @@ export interface GithubIssue {
 }
 
 export type IssueType = 'epic' | 'story';
+
+export interface Command {
+    data: {
+        name: string;
+        description: string;
+        toJSON?: () => unknown;
+    };
+    execute: (interaction: ChatInputCommandInteraction) => Promise<void> | void;
+}

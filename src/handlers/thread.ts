@@ -14,7 +14,7 @@ export async function handleNewThread(thread: ThreadChannel): Promise<void> {
         const title = thread.name;
         const body = formatIssueBody(
             firstMessage.author.tag,
-            thread.guildId!,
+            thread.guildId,
             thread.id,
             firstMessage.content
         );

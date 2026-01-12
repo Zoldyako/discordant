@@ -3,11 +3,13 @@ import {
     Collection,
     GatewayIntentBits,
     ChannelType,
-    type ThreadChannel,
-    type TextChannel,
 } from 'discord.js';
+
+import type { ThreadChannel } from 'discord.js';
+
 import { config } from '../config.js';
-import type { GithubIssue, IssueType } from '../types.js';
+
+import type { GithubIssue, IssueType, Command } from '../types.js';
 
 export const client = new Client({
     intents: [
@@ -16,7 +18,7 @@ export const client = new Client({
         GatewayIntentBits.MessageContent,
     ],
 });
-export const commands = new Collection<string, any>();
+export const commands = new Collection<string, Command>();
 export async function createThreadForIssue(
     issue: GithubIssue
 ): Promise<ThreadChannel | null> {
@@ -30,13 +32,12 @@ export async function createThreadForIssue(
         const labels = issue.labels.map((l) => l.name).join(', ');
         const issueType = getIssueType(issue);
 
-        const thread = await (channel as TextChannel).threads.create({
+        const thread = await (channel).threads.create({
             name: `[${issueType.toUpperCase()}] ${issue.title.substring(0, 80)}`,
             autoArchiveDuration: 1440,
-            message: {
-                content: formatIssueMessage(issue, issueType, labels),
-            },
         });
+
+        await thread.send(formatIssueMessage(issue, issueType, labels));
 
         return thread;
     } catch (error) {
