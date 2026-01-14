@@ -13,6 +13,11 @@ const MAX_RETRIES = 3;
 const BASE_COOLDOWN_MS = 5 * 60 * 1000;
 
 export async function pollPrivateRepoIssues(): Promise<void> {
+    if (!config.discord.autoSyncEnabled) {
+        console.log('[Polling] Auto-sync desabilitado, pulando polling...');
+        return;
+    }
+
     try {
         console.log(`[Polling] Buscando issues em ${config.github.privateRepo.owner}/${config.github.privateRepo.repo}...`);
 

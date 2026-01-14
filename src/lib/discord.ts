@@ -116,6 +116,14 @@ function getIssueType(issue: GithubIssue): IssueType {
     return 'epic';
 }
 
+function escapeDiscordMentions(text: string): string {
+    // Escapa menções de usuários, roles e canais para evitar pings
+    return text
+        .replaceAll(/<@&(\d+)>/g, String.raw`\<@&$1\>`)  // Role mentions
+        .replaceAll(/<@!?(\d+)>/g, String.raw`\<@$1\>`)  // User mentions
+        .replaceAll(/<#(\d+)>/g, String.raw`\<#$1\>`);   // Channel mentions
+}
+
 function formatIssueMessage(
     issue: GithubIssue,
     issueType: IssueType,
@@ -128,6 +136,9 @@ function formatIssueMessage(
 
     const typeLabel = issueType === 'epic' ? '⭐ Epic' : '📖 Story';
     const labelsLine = labels ? `\n**Labels:** ${labels}` : '';
+    
+    // Escapa menções no corpo da issue para evitar pings indesejados
+    const safeBody = issue.body ? escapeDiscordMentions(issue.body) : 'Sem descrição';
 
-    return `**${typeLabel}:** ${cleanTitle}\n\n${issue.body || 'Sem descrição'}${labelsLine}\n**GitHub:** ${issue.html_url}`;
+    return `**${typeLabel}:** ${cleanTitle}\n\n${safeBody}${labelsLine}\n**GitHub:** ${issue.html_url}`;
 }

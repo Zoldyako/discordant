@@ -8,6 +8,7 @@ export const config = {
         guildId: process.env.GUILD_ID!,
         triageChannelId: process.env.TRIAGE_CHANNEL_ID!,
         epicChannelId: process.env.EPIC_CHANNEL_ID!,
+        autoSyncEnabled: process.env.AUTO_SYNC_ENABLED === 'true',
     },
     github: {
         token: process.env.GITHUB_TOKEN!,

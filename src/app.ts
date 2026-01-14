@@ -32,7 +32,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        await interaction.reply({ content: 'Erro ao executar comando!', ephemeral: true });
+        // Verifica se a interação já foi respondida ou deferida
+        try {
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ content: 'Erro ao executar comando!' });
+            } else {
+                await interaction.reply({ content: 'Erro ao executar comando!', ephemeral: true });
+            }
+        } catch {
+            // Ignora se a interação expirou
+        }
     }
 });
 
