@@ -20,5 +20,19 @@ export const config = {
             owner: process.env.PRIVATE_REPO_OWNER!,
             repo: process.env.PRIVATE_REPO_NAME!,
         },
+        labels: {
+            synced: 'discord-synced',
+            // Labels que fazem a issue ser ignorada pelo bot
+            ignored: [
+                'wontfix',
+                'duplicate',
+                'invalid',
+                'nice to have (not planned)'
+            ],
+        },
+        types: {
+            epic: '⭐ Epic',
+            story: '📖 Feature / Story',
+        },
     },
 } as const;

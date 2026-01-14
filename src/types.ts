@@ -15,6 +15,8 @@ export interface GithubIssue {
     user: {
         login: string;
     } | null;
+    // Campo customizado adicionado pelo bot para identificar o tipo
+    issueType?: IssueType;
 }
 
 export type IssueType = 'epic' | 'story';
