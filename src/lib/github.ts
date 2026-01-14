@@ -51,32 +51,54 @@ export async function addIssueToProject(
     }
 }
 
-export async function listIssuesWithLabels(
+export async function listIssuesWithTypes(
     owner: string,
     repo: string,
-    labels: string[]
+    types: string[]
 ): Promise<GithubIssue[]> {
     try {
-        // A API do GitHub com labels separados por vírgula retorna issues com TODAS as labels
-        // Para buscar issues com QUALQUER uma das labels, precisamos fazer chamadas separadas
+        // Busca issues por type (não label)
         const allIssues: GithubIssue[] = [];
         const seenIds = new Set<number>();
 
-        for (const label of labels) {
-            const { data } = await octokit.rest.issues.listForRepo({
-                owner,
-                repo,
-                state: 'open',
-                labels: label,
+        // Mapeia type do GitHub para IssueType interno
+        const { epic: EPIC_TYPE, story: STORY_TYPE } = config.github.types;
+
+        for (const type of types) {
+            const query = `repo:${owner}/${repo} is:issue is:open type:"${type}"`;
+            console.log(`[GitHub] Query de busca: ${query}`);
+
+            const { data } = await octokit.rest.search.issuesAndPullRequests({
+                q: query,
                 sort: 'created',
-                direction: 'desc',
-                per_page: 10,
+                order: 'desc',
+                per_page: 20,
             });
 
-            for (const issue of data) {
+            console.log(`[GitHub] Type "${type}": ${data.total_count} issues`);
+
+            // Determina o issueType baseado no type EXATO do GitHub
+            let issueType: 'epic' | 'story' | undefined;
+            if (type === EPIC_TYPE) {
+                issueType = 'epic';
+            } else if (type === STORY_TYPE) {
+                issueType = 'story';
+            }
+
+            // Se não é um type conhecido, pula
+            if (!issueType) {
+                console.log(`[GitHub] Type "${type}" não reconhecido, pulando...`);
+                continue;
+            }
+
+            for (const issue of data.items) {
                 if (!seenIds.has(issue.id)) {
                     seenIds.add(issue.id);
-                    allIssues.push(issue as GithubIssue);
+                    // Adiciona o issueType à issue
+                    allIssues.push({
+                        ...issue,
+                        issueType,
+                    } as GithubIssue);
                 }
             }
         }
@@ -104,5 +126,27 @@ export async function addLabelToIssue(
     } catch (error) {
         console.error(`Erro ao adicionar label '${label}' à issue #${issueNumber}:`, error);
         throw error;
+    }
+}
+
+export async function removeLabelFromIssue(
+    owner: string,
+    repo: string,
+    issueNumber: number,
+    label: string
+): Promise<void> {
+    try {
+        await octokit.rest.issues.removeLabel({
+            owner,
+            repo,
+            issue_number: issueNumber,
+            name: label,
+        });
+    } catch (error) {
+        // Ignora erro se a label não existe na issue
+        if ((error as { status?: number }).status !== 404) {
+            console.error(`Erro ao remover label '${label}' da issue #${issueNumber}:`, error);
+            throw error;
+        }
     }
 }
